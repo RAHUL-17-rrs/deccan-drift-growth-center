@@ -244,7 +244,7 @@ function Spark({ values }: { values: number[] }) {
     >
       <polyline
         fill="none"
-        stroke="#47856a"
+        stroke="#3d5afe"
         strokeWidth="2"
         points={values
           .map(

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   LayoutDashboard,
   Filter,
@@ -12,7 +12,6 @@ import {
   ChevronsUpDown,
   Sparkles,
   Menu,
-  ChevronRight,
   MapPin,
   CalendarDays,
 } from "lucide-react";
@@ -110,6 +109,19 @@ export default function Workspace() {
   }, [page, date, attr, revision, filters]);
   const ready =
     db && db._page === page && db._date === date && db._attr === attr;
+  // Not every page's response carries KPIs or alerts; keep the last known counts.
+  const counts = useRef<Row>({});
+  if (ready && db.kpi?.[0]) counts.current.Manager = db.kpi[0].open_tasks || 0;
+  if (ready && Array.isArray(db.alerts))
+    counts.current.Campaigns = db.alerts.filter(
+      (r: Row) => r.label === "STOP",
+    ).length;
+  const badges = counts.current;
+  const snapshot = new Date(date + "T12:00:00Z").toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
   return (
     <div className="shell">
       {nav && (
@@ -121,7 +133,7 @@ export default function Workspace() {
       )}
       <aside className={"sidebar " + (nav ? "shown" : "")}>
         <div className="brand">
-          <div className="brandMark">
+          <div className="brandMark" aria-hidden="true">
             <i />
             <i />
             <i />
@@ -129,15 +141,6 @@ export default function Workspace() {
           <div>
             <b>Deccan Drift</b>
             <span>Growth Center</span>
-          </div>
-        </div>
-        <div className="eventBlock">
-          <div className="eventIcon">
-            <FlagIcon />
-          </div>
-          <div>
-            <b>Festival workspace</b>
-            <small>Pune, India</small>
           </div>
         </div>
         <nav>
@@ -151,26 +154,43 @@ export default function Workspace() {
                   key={name}
                   onClick={() => go(name)}
                 >
-                  <Icon size={17} />
+                  <Icon size={17} strokeWidth={1.8} />
                   {name === "Plan"
                     ? "2027 plan"
                     : name === "Manager"
                       ? "Task manager"
                       : name}
+                  {badges[name] > 0 && (
+                    <span
+                      className={"navBadge" + (name === "Campaigns" ? " alert" : "")}
+                      aria-hidden="true"
+                    >
+                      {badges[name]}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
           ))}
         </nav>
+        <div className="eventBlock">
+          <span className="eventIcon">
+            <FlagIcon />
+          </span>
+          <div>
+            <b>Festival workspace</b>
+            <small>Pune, India</small>
+          </div>
+        </div>
         <div className="account">
-          <span className="avatar">
+          <span className="avatar" aria-hidden="true">
             {user
               .split(" ")
               .map((s) => s[0])
               .join("")}
           </span>
           <label>
-            <small>Current user</small>
+            <small>Signed in as</small>
             <select
               aria-label="Current user"
               value={user}
@@ -189,42 +209,31 @@ export default function Workspace() {
               ))}
             </select>
           </label>
-          <ChevronsUpDown size={14} />
+          <ChevronsUpDown size={14} aria-hidden="true" />
         </div>
       </aside>
       <div className="main">
-        <header className="topbar">
-          <button
-            className="icon mobile"
-            aria-label="Open navigation"
-            onClick={() => setNav(true)}
-          >
-            <Menu size={20} />
-          </button>
-          <span>Workspace</span>
-          <ChevronRight size={13} />
-          <b>{page}</b>
-          <div className="spacer" />
-          <button className="copilotBtn" onClick={() => setChat(true)}>
-            <Sparkles size={16} />
-            Growth Copilot
-          </button>
-        </header>
         <main aria-busy={loading}>
-          <div className="pageHead">
-            <div>
-              <div className="contextTag">
-                <span className="statusDot" />
-                {page === "Plan" ? "DECCAN DRIFT 2027" : "CAMPUSFEST 2025"}
+          <header className="pageHead">
+            <button
+              className="icon mobile"
+              aria-label="Open navigation"
+              onClick={() => setNav(true)}
+            >
+              <Menu size={20} />
+            </button>
+            <div className="titleBlock">
+              <div className="titleRow">
+                <h1>{headings[page]}</h1>
+                <span className="edition">
+                  {page === "Plan" ? "Deccan Drift 2027" : "CampusFest 2025"}
+                </span>
               </div>
-              <h1>{headings[page]}</h1>
               <p>{desc[page]}</p>
             </div>
-          </div>
-          <div className="scopeBar">
-            <div className="tools">
+            <div className="headActions">
               <label className="scopeControl">
-                <CalendarDays size={15} />
+                <CalendarDays size={15} aria-hidden="true" />
                 <span>As of</span>
                 <input
                   aria-label="As of date"
@@ -248,14 +257,12 @@ export default function Workspace() {
                   <option value="first-touch">First touch</option>
                 </select>
               </label>
+              <button className="copilotBtn" onClick={() => setChat(true)}>
+                <Sparkles size={16} aria-hidden="true" />
+                Growth Copilot
+              </button>
             </div>
-            <small>
-              {ready
-                ? db.kpi[0].target_version?.replace("Attendee ", "")
-                : "Historical snapshot"}{" "}
-              · IST
-            </small>
-          </div>
+          </header>
           {error && (
             <div role="alert" className="error">
               {error} <button onClick={refresh}>Retry</button>
@@ -293,6 +300,16 @@ export default function Workspace() {
               </div>
             )
           )}
+          <footer className="pageFoot">
+            <span>
+              Snapshot at end of {snapshot}, India Standard Time
+            </span>
+            <span>
+              Target:{" "}
+              {(ready && db.kpi?.[0]?.target_version?.replace("Attendee ", "")) ||
+                "—"}
+            </span>
+          </footer>
         </main>
       </div>
       {chat && (

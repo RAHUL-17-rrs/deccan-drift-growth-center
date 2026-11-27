@@ -1,12 +1,13 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { X, ChevronUp } from "lucide-react";
 import {
   ReactNode,
   ReactElement,
   cloneElement,
   isValidElement,
   useId,
+  useState,
 } from "react";
 export type Row = Record<string, any>;
 export type Data = Record<string, any>;
@@ -47,22 +48,42 @@ export function Panel({
   aside,
   children,
   sub,
+  icon,
 }: {
   title: string;
   aside?: ReactNode;
   children: ReactNode;
   sub?: string;
+  icon?: ReactNode;
 }) {
+  const [open, setOpen] = useState(true),
+    bodyId = useId();
   return (
-    <section className="panel">
+    <section className={"panel" + (open ? "" : " collapsed")}>
       <div className="panelHead">
-        <div>
+        {icon && (
+          <span className="panelIcon" aria-hidden="true">
+            {icon}
+          </span>
+        )}
+        <div className="panelTitle">
           <h2>{title}</h2>
-          {sub && <p>{sub}</p>}
+          {sub && open && <p>{sub}</p>}
         </div>
-        {aside}
+        {open && aside}
+        <button
+          className="icon collapseBtn"
+          aria-expanded={open}
+          aria-controls={bodyId}
+          aria-label={(open ? "Collapse " : "Expand ") + title}
+          onClick={() => setOpen(!open)}
+        >
+          <ChevronUp size={16} />
+        </button>
       </div>
-      {children}
+      <div className="panelBody" id={bodyId} hidden={!open}>
+        {children}
+      </div>
     </section>
   );
 }

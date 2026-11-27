@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
+  ChevronRight,
   ScanLine,
   Ticket,
   UsersRound,
@@ -10,8 +11,10 @@ import {
   ListTodo,
   Radio,
   Activity,
+  TrendingUp,
+  Telescope,
 } from "lucide-react";
-import { Trend } from "./charts";
+import { Trend, Sparkline } from "./charts";
 import {
   Data,
   Row,
@@ -22,52 +25,35 @@ import {
 } from "./ui";
 
 function ProgressRing({ value }: { value: number | null }) {
-  const fill = Math.max(0, Math.min(1, value || 0));
+  const fill = Math.max(0, Math.min(1, value || 0)),
+    c = 2 * Math.PI * 52;
   return (
-    <svg className="targetRing" viewBox="0 0 58 58" aria-hidden="true">
+    <svg className="targetRing" viewBox="0 0 120 120" aria-hidden="true">
+      <circle cx="60" cy="60" r="52" fill="none" stroke="var(--success-soft)" strokeWidth="9" />
       <circle
-        cx="29"
-        cy="29"
-        r="24"
+        cx="60"
+        cy="60"
+        r="52"
         fill="none"
-        stroke="#ffffff29"
-        strokeWidth="4"
-      />
-      <circle
-        cx="29"
-        cy="29"
-        r="24"
-        fill="none"
-        stroke="#cfeb97"
-        strokeWidth="4"
+        stroke="var(--success)"
+        strokeWidth="9"
         strokeLinecap="round"
-        strokeDasharray={fill * 150.8 + " 151"}
-        transform="rotate(-90 29 29)"
-      />
-      <path
-        d="M24 37V20m0 1c4-4 7 4 12 0v9c-5 4-8-4-12 0"
-        fill="none"
-        stroke="#d9efb2"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeDasharray={fill * c + " " + c}
+        transform="rotate(-90 60 60)"
       />
     </svg>
   );
 }
-function GoalLine({ value, detail }: { value: number | null; detail: string }) {
-  return (
-    <>
-      <div className="goalLine">
-        <i
-          style={{
-            width: Math.min(100, Math.max(0, (value || 0) * 100)) + "%",
-          }}
-        />
-      </div>
-      <small>{detail}</small>
-    </>
-  );
+const ringStatus = (v: number | null) =>
+  v == null ? "No goal set" : v >= 1 ? "Goal met" : v >= 0.9 ? "Near goal" : "Behind goal";
+function weekly(trend: Row[], key: string) {
+  const out: { x: string; v: number }[] = [];
+  for (let i = 0; i < trend.length; i += 7)
+    out.push({
+      x: trend[i].day,
+      v: trend.slice(i, i + 7).reduce((t, r) => t + (Number(r[key]) || 0), 0),
+    });
+  return out;
 }
 export function Overview({ db, go }: { db: Data; go: (p: string) => void }) {
   const k = db.kpi[0],
@@ -95,23 +81,37 @@ export function Overview({ db, go }: { db: Data; go: (p: string) => void }) {
       label: "Registrations",
       v: n(k.regs),
       value: k.reg_attainment,
-      detail: pc(k.reg_attainment) + " of " + n(k.reg_goal) + " goal",
+      detail: "of " + n(k.reg_goal) + " goal",
       Icon: Ticket,
+      tone: "blue",
+      color: "#3d5afe",
+      series: weekly(db.trend, "regs"),
+      caption: "Weekly registrations",
+      link: ["View funnel", "Funnel"],
     },
     {
       label: "Identified people",
       v: n(k.identified),
       value: k.identified_attainment,
-      detail:
-        pc(k.identified_attainment) + " of " + n(k.identified_goal) + " goal",
+      detail: "of " + n(k.identified_goal) + " goal",
       Icon: UsersRound,
+      tone: "violet",
+      color: "#7a5af0",
+      series: weekly(db.trend, "sessions"),
+      caption: "Weekly landing sessions",
+      link: ["View campaigns", "Campaigns"],
     },
     {
       label: "Net spend",
       v: rs(k.spend),
       value: k.budget_used,
-      detail: pc(k.budget_used) + " of " + rs(k.budget) + " budget",
+      detail: "of " + rs(k.budget) + " budget",
       Icon: Wallet,
+      tone: "green",
+      color: "#16a06a",
+      series: weekly(db.trend, "spend"),
+      caption: "Weekly net spend",
+      link: ["View budget", "Budget"],
     },
   ];
   return (
@@ -119,31 +119,59 @@ export function Overview({ db, go }: { db: Data; go: (p: string) => void }) {
       <div className="stats overviewStats">
         <article className="stat lead attendance">
           <div className="statTop">
-            <span>
-              <ScanLine size={16} /> Unique attendees
+            <span>Unique attendees</span>
+            <span className="chip green" aria-hidden="true">
+              <ScanLine size={16} />
             </span>
           </div>
-          <strong>{n(k.attendees)}</strong>
-          <ProgressRing value={k.attendee_attainment} />
-          <small>
-            <b>{pc(k.attendee_attainment)}</b> of {n(k.attendee_goal)} goal
-          </small>
-        </article>
-        {stats.map(({ label, v, value, detail, Icon }) => (
-          <article className="stat" key={label}>
-            <div className="statTop">
-              <span>{label}</span>
-              <Icon size={16} />
+          <div className="ringWrap">
+            <ProgressRing value={k.attendee_attainment} />
+            <div className="ringCenter">
+              <strong>{n(k.attendees)}</strong>
+              <small>{ringStatus(k.attendee_attainment)}</small>
             </div>
-            <strong>{v}</strong>
-            <GoalLine value={value} detail={detail} />
-          </article>
-        ))}
+          </div>
+          <p className="ringNote">
+            {pc(k.attendee_attainment)} of {n(k.attendee_goal)} visitor goal
+          </p>
+          <button className="statLink" onClick={() => go("Funnel")}>
+            View attendance funnel <ChevronRight size={15} />
+          </button>
+        </article>
+        {stats.map(
+          ({ label, v, value, detail, Icon, tone, color, series, caption, link }) => (
+            <article className={"stat " + tone} key={label}>
+              <div className="statTop">
+                <span>{label}</span>
+                <span className={"chip " + tone} aria-hidden="true">
+                  <Icon size={16} />
+                </span>
+              </div>
+              <strong>{v}</strong>
+              <div className="statMeta">
+                <span
+                  className={
+                    "goalPill " +
+                    (value == null ? "" : value >= 0.9 ? "good" : "watch")
+                  }
+                >
+                  {pc(value)}
+                </span>
+                <small>{detail}</small>
+              </div>
+              <Sparkline data={series} color={color} label={caption} />
+              <button className="statLink" onClick={() => go(link[1])}>
+                {link[0]} <ChevronRight size={15} />
+              </button>
+            </article>
+          ),
+        )}
       </div>
       <div className="gridWide chartsRow">
         <Panel
           title="Registration pace"
           sub="Actual registrations against the expected pace."
+          icon={<TrendingUp size={17} />}
           aside={
             <div className="seg chartRange">
               {[
@@ -176,6 +204,7 @@ export function Overview({ db, go }: { db: Data; go: (p: string) => void }) {
         </Panel>
         <Panel
           title="Channel performance"
+          icon={<Radio size={17} />}
           sub={
             rankMetric === "attendees"
               ? "Ranked by unique verified attendees."
@@ -218,11 +247,11 @@ export function Overview({ db, go }: { db: Data; go: (p: string) => void }) {
                     style={{
                       width: (100 * r[rankMetric]) / max + "%",
                       background: [
-                        "#266648",
-                        "#438060",
-                        "#699878",
-                        "#8bab8a",
-                        "#a5bd98",
+                        "#3d5afe",
+                        "#5468fb",
+                        "#6a6ef7",
+                        "#8a86f3",
+                        "#aaa3f4",
                       ][i],
                     }}
                   />
@@ -258,7 +287,11 @@ export function Overview({ db, go }: { db: Data; go: (p: string) => void }) {
         </button>
       </div>
       <div className="gridWide decisionRow">
-        <Panel title="Attendance outlook" sub={compareFunnel}>
+        <Panel
+          title="Attendance outlook"
+          sub={compareFunnel}
+          icon={<Telescope size={17} />}
+        >
           <div className="outlookGrid">
             {[
               [
@@ -300,6 +333,7 @@ export function Overview({ db, go }: { db: Data; go: (p: string) => void }) {
         <Panel
           title="Team actions"
           sub="Current assignments and campaign decisions."
+          icon={<ListTodo size={17} />}
         >
           <button className="actionRow" onClick={() => go("Manager")}>
             <span className="actionIcon">
