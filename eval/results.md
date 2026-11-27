@@ -1,0 +1,31 @@
+# Growth Copilot evaluation
+
+Provider mode: **local**. Database: isolated test database, restored from both original workbooks.
+
+**23 / 23 passed (100%).**
+
+| Question or workflow | Expected | Observed | Result |
+|---|---|---|---|
+| How many unique people attended? | 2,050 distinct attendees | [Data] 2,050 unique verified external attendees, including 125 walk-ins. | Pass |
+| Which campaign has the lowest cost per attendee? | Student Referrals ₹69 | [Calculation] Student Referrals leads this comparison at ₹69 cost per attendee. Organic Search ₹72 · College Partnerships ₹81 · Community Groups ₹97 | Pass |
+| Which campaigns are underperforming and why? | Paid Social and Creator Partners; ~55% of spend, ~27% of attributed visitors, 50% show-up | [Calculation] Creator Partners and Paid Social account for 55.5% of spend and 26.8% of attributed attendees. Their combined registration → attendance rate is 50%. [Data] Creator Partners recorded 4,066 anonymous sessions, 490 identified people, 350 registrations, 290 confirmed and 175 attendees. Session → registration 8.6%. | Pass |
+| What should we do? | Recommendation supported by a simulator estimate | [Assumption / estimate] Review new spend on Creator Partners first. Pilot a transfer to Student Referrals. Test a reminder or refundable deposit on Paid Social and measure whether any show-up gain offsets lost registrations. Consider College Partnerships as a second destination at ₹81 per attendee. Recheck marginal acquisition cost and show-up before scaling. [Calculation] Creator Partners leads this comparison at ₹337 cost per attendee. Paid Social ₹274 · Campus Ambassadors ₹108 · Community Groups ₹97 [Calculation] Student Referrals leads this comparison at ₹69 cost per attendee. Organic Search ₹72 · College Partnerships ₹81 · Community Groups ₹97 [Assumption / estimate] Moving ₹20,000 gives a linear net change of 216 attendees. With diminishing returns, the net is 120 attendees. Student Referrals 233 registrations / 183 attendees (linear 289 attendees) · Paid Social -126 registrations  | Pass |
+| How many registrations did we have on 1 March? | 1,144 · launch | [Data] 1,144 external registrations. Attendee launch plan | Pass |
+| And how does that compare to target? | 1,144 / 2,800 · 40.9% attainment · 102% pacing | [Calculation] 1,144 registrations against the 2,800 full-season goal (40.9%). Pacing is 102.1% of the expected 40% share. | Pass |
+| What was spend as of 11 April vs final, and why are they different? | ₹2,76,500 vs ₹2,74,000 and posted credits | [Data] ₹2,76,500 on 11 Apr 2025 and ₹2,74,000 on 20 Apr 2025. Posted credits in the interval: ₹-2,000 on 16 Apr 2025, ₹-500 on 18 Apr 2025. | Pass |
+| How many people came both days? | 725 | [Data] 725 unique people came both days. 2025-04-12 · 1,430 people; 2025-04-13 · 1,345 people. | Pass |
+| If we move ₹20k from Paid Social to Referrals, what happens? | Linear loss ~73 and gain ~290; diminishing net ~120 | [Assumption / estimate] Moving ₹20,000 gives a linear net change of 216 attendees. With diminishing returns, the net is 120 attendees. Student Referrals 233 registrations / 183 attendees (linear 289 attendees) · Paid Social -126 registrations / -63 attendees (linear -73 attendees). Assumes unchanged show-up, the measured unit costs and editable saturation factors. | Pass |
+| Create a task for Arjun to cut Creator Partners spend by Friday | Preview only · C03 · Arjun Verma · resolved Friday | Cut Creator Partners spend · C03 · 2026-12-04 | Pass |
+| Confirm twice and complete the proposed change | One AI task, open count 1; completion applies paused status | One linked AI task, one open action, completion applied paused status | Pass |
+| Which artist drove the most attendance? | Explains missing field or uncertain forecast | [Not in data] The data can't answer this. That attribute is absent from the workbook. A linked person or programme field would be needed. Campaign attribution and verified attendance are available. | Pass |
+| What is the gender split? | Explains missing field or uncertain forecast | [Not in data] The data can't answer this. That attribute is absent from the workbook. A linked person or programme field would be needed. Campaign attribution and verified attendance are available. | Pass |
+| How many will attend next year? | Explains missing field or uncertain forecast | [Not in data] The data can't answer this. Future attendance is a forecast. The 2027 plan and its assumptions can provide a range. | Pass |
+| Which owner drove the most registrations? | Meera Iyer, 970 | [Data] Meera Iyer · 970 Arjun Verma · 930 Nisha Rao · 550 Dev Malhotra · 350 | Pass |
+| Busiest registration week? | 24 March 2025, 354 | [Data] 2025-03-24 · 354 2025-03-31 · 346 2025-03-17 · 324 2025-02-17 · 300 2025-02-10 · 279 2025-03-10 · 258 2025-02-24 · 249 2025-02-03 · 200 | Pass |
+| How many people opted out? | 229 | [Data] opted_out · 229 events / 229 people | Pass |
+| Scanner vs manual check-ins? | 2,945 scanner, 305 manual | [Data] manual 305 · scanner 2,945 admitted, verified entries. | Pass |
+| What's Organic Search's session-to-registration rate? | 250 / 1,893 = 13.2% | [Data] Organic Search recorded 1,893 anonymous sessions, 290 identified people, 250 registrations, 225 confirmed and 195 attendees. Session → registration 13.2%. | Pass |
+| Edit 50 Paid Social check-ins and re-ask diagnosis | Paid Social CPA rises; attributed share refreshes | Paid Social 340 → 312 visitors; CPA ₹273.53 → ₹298.08. [Calculation] Creator Partners and Paid Social account for 55.5% of spend and 25.7% of attributed attendees. Their combined registration → attendance rate is 47.3%. [Data] Creator Partners recorded 4,066 anonymous sessions, 490 identified people, 350 registrations, 290 confirmed and 175 attendees. Session → registration 8.6%. | Pass |
+| Edit referral spend and re-ask lowest CPA | The cheapest campaign changes to Organic Search | [Calculation] Organic Search leads this comparison at ₹72 cost per attendee. College Partnerships ₹81 · Community Groups ₹97 · Student Referrals ₹105 | Pass |
+| Scoped read-only unfamiliar query | As-of 1 March returns 1,144, disallowed write/system access rejected | 1,144; rejected four unsupported queries | Pass |
+| Restore original data | Final attendance 2,050; tasks cleared | 2,050 and 0 tasks | Pass |

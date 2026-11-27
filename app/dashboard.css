@@ -1,0 +1,316 @@
+.icon.mobile {
+  display: none;
+}
+.field > label {
+  font-size: 11px;
+  font-weight: 600;
+}
+.statTop > span,
+.attendance .statTop > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.overviewStats .stat {
+  position: relative;
+  padding: 17px 19px 15px;
+  min-height: 131px;
+  overflow: hidden;
+}
+.overviewStats .lead {
+  background: #1c4936;
+  border-color: #1c4936;
+  color: #fafdf5;
+}
+.attendance .statTop,
+.attendance .statTop svg,
+.attendance small {
+  color: #d3e8d5;
+}
+.attendance small b {
+  color: #d3eca8;
+  font-weight: 600;
+}
+.attendance strong {
+  position: relative;
+  z-index: 1;
+}
+.attendance .targetRing {
+  position: absolute;
+  width: 49px;
+  height: 49px;
+  right: 16px;
+  top: 43px;
+}
+.overviewStats .stat strong {
+  margin: 13px 0 10px;
+  font-size: clamp(25px, 2.38vw, 39px);
+}
+.overviewStats .attendance strong {
+  margin-bottom: 17px;
+}
+.goalLine {
+  height: 3px;
+  border-radius: 2px;
+  background: #edf1e9;
+  overflow: hidden;
+  margin: 0 0 7px;
+}
+.goalLine i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: #92ac80;
+}
+.overviewStats .stat:last-child .goalLine i {
+  background: #baaa78;
+}
+.overviewStats small {
+  display: block;
+  line-height: 1.25;
+  font-size: 11px;
+}
+.chartsRow {
+  grid-template-columns: minmax(0, 1.64fr) minmax(0, 1fr);
+}
+.chartsRow .panel {
+  display: flex;
+  flex-direction: column;
+}
+.chartsRow .panelHead {
+  margin-bottom: 10px;
+}
+.chartReadout {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: 4px 0 0;
+}
+.chartReadout b {
+  font-size: 28px;
+  color: #243c2d;
+  font-weight: 620;
+  letter-spacing: -1.3px;
+}
+.chartReadout span {
+  font-size: 11px;
+  color: #667368;
+}
+.chartsRow .legend {
+  margin: 8px 0 2px;
+}
+.chartsRow .chart {
+  flex: 1;
+  min-height: 210px;
+}
+.chartRange,
+.rankSwitch {
+  padding: 2px;
+  background: #eef2eb;
+}
+.chartRange button,
+.rankSwitch button {
+  font-size: 11px;
+  min-height: 25px;
+  padding: 3px 8px;
+}
+.chartRange button.on,
+.rankSwitch button.on {
+  color: #244833;
+}
+.rankSwitch {
+  align-self: flex-start;
+  margin: 0 0 13px;
+}
+.ranking {
+  gap: 12px;
+}
+.ranking > div > div:first-child {
+  margin-bottom: 4px;
+}
+.ranking .bar {
+  height: 5px;
+}
+.cardLink {
+  font-size: 12px;
+  color: #366347;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  border-top: 1px solid #e3e9df;
+  margin-top: 15px;
+  padding: 12px 0 0;
+  min-height: 27px;
+  justify-content: space-between;
+}
+.arrowLink {
+  border: 1px solid #dde5d9;
+  background: #fafbf8;
+}
+.signalStrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  border: 1px solid #d7e0d0;
+  background: #edf3e6;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #48604d;
+}
+.signalStrip strong {
+  color: #294c35;
+  font-variant-numeric: tabular-nums;
+}
+.signalStrip small {
+  margin-left: 5px;
+  font-size: 10px;
+  color: #617163;
+}
+.signalTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.signalStrip button {
+  font-size: 11px;
+}
+.outlookGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+}
+.outlookGrid > div {
+  display: grid;
+  gap: 3px;
+  border-left: 2px solid #dce9d6;
+  padding-left: 10px;
+}
+.outlookGrid b {
+  font-size: 23px;
+  letter-spacing: -0.8px;
+  font-weight: 620;
+}
+.outlookGrid small {
+  font-size: 11px;
+  color: #526456;
+}
+.outlookGrid span,
+.actionRow small {
+  font-size: 10px;
+  color: #6a796c;
+}
+.actionRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #e1e7dd;
+  border-radius: 0;
+  padding: 12px 0;
+  text-align: left;
+}
+.actionRow:last-child {
+  border-bottom: 0;
+}
+.actionRow span:nth-child(2) {
+  display: grid;
+  gap: 4px;
+}
+.actionRow b {
+  font-size: 12px;
+}
+.actionIcon {
+  width: 32px;
+  height: 32px;
+  background: #eef4e8;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #4d7354;
+}
+.actionRow strong {
+  margin-left: auto;
+  font-size: 19px;
+}
+.actionRow > svg {
+  color: #68836b;
+}
+.topbar,
+.panel,
+.stat,
+.chart text {
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 1050px) {
+  .attendance .targetRing {
+    width: 35px;
+    height: 35px;
+    right: 10px;
+    top: 45px;
+  }
+  .overviewStats .stat {
+    padding: 15px 13px;
+  }
+  .chartsRow .panelHead {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 800px) {
+  .icon.mobile {
+    display: inline-grid;
+  }
+  .chartsRow {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  }
+  .signalStrip {
+    justify-content: flex-start;
+  }
+  .signalStrip button {
+    margin-left: auto;
+  }
+}
+@media (max-width: 640px) {
+  .chartsRow,
+  .decisionRow {
+    grid-template-columns: 1fr;
+  }
+  .chartsRow .chart {
+    min-height: 205px;
+    flex: initial;
+  }
+  .overviewStats .stat {
+    min-height: 116px;
+  }
+  .attendance .targetRing {
+    width: 32px;
+    height: 32px;
+    top: 43px;
+  }
+  .overviewStats .stat strong {
+    font-size: 29px;
+  }
+  .signalStrip small {
+    display: block;
+    margin: 2px 0 0;
+  }
+  .signalTitle {
+    width: 100%;
+  }
+  .signalStrip {
+    gap: 8px 16px;
+  }
+  .chartRange {
+    margin-left: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
