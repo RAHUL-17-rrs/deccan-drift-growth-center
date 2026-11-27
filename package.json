@@ -8,9 +8,10 @@
     "start": "node scripts/start.mjs --production",
     "seed": "node scripts/seed.mjs",
     "reset": "node scripts/seed.mjs",
-    "test": "node --test tests/metrics.test.mjs",
+    "test": "node --test --test-concurrency=1 tests/metrics.test.mjs tests/grounded-copilot.test.mjs",
     "eval:copilot": "node scripts/eval.mjs",
     "eval:challenges": "node scripts/eval-challenges.mjs",
+    "eval:question-bank": "node scripts/eval-question-bank.mjs",
     "test:browser": "node scripts/browser.mjs"
   },
   "dependencies": {

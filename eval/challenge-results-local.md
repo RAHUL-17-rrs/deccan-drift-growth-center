@@ -2,7 +2,7 @@
 
 Provider mode: **local**. Fresh workbook fixtures in the isolated growth_test database.
 
-**6 / 26 graded scenarios passed** across 30 executed chat turns. 20 failed their acceptance checks, 1 had execution errors and 0 were not run.
+**13 / 27 graded scenarios passed** across 30 executed chat turns. 14 failed their acceptance checks, 0 had execution errors and 0 were not run.
 
 Each scenario starts a new conversation. Follow-ups reuse its ID. The checks examine the visible answer, scope, evidence trace and database side effects. Mixed questions require both a grounded answer and a useful qualification. The supplied exchange rate and sponsor fee are fictional assumptions. No case uses an external lookup or requires knowledge of a live score, rate or competitor result.
 
@@ -10,22 +10,24 @@ Each scenario starts a new conversation. Follow-ups reuse its ID. The checks exa
 |---|---:|---:|---:|---:|
 | Outside the workbook | 1 | 6 | 0 | 0 |
 | Mixed evidence and assumptions | 0 | 6 | 0 | 0 |
-| Counting and snapshots | 2 | 7 | 0 | 0 |
-| Conversation and actions | 3 | 1 | 1 | 0 |
+| Counting and snapshots | 8 | 1 | 0 | 0 |
+| Conversation and actions | 4 | 1 | 0 | 0 |
 
 Numeric checks allow the stated rounding. Wording checks use patterns, so a human can use the transcripts to review equivalently worded answers or accidental matches. A transport or runtime error is reported separately from an incorrect answer.
 
 ## Outside the workbook
 
-### external-score · Pass
+### external-score · Fail
 
 **Expected.** State the lack of a sports feed or the limits of festival analytics. Give no invented match score.
 
 **Question.** Who won last night's cricket match in Pune? I only need the score.
 
-**Observed.** [Not in data] Local query mode could not map that question to a supported metric. Enable a model provider for open-ended questions, or ask about attendance, spend, registrations or campaigns.
+**Observed.** [Clarification] I couldn't match that wording in local query mode. Which campaign or metric should I look at? You can ask for a campaign recommendation, an attendance count, or a spend comparison.
 
 **Evidence.** describe_data · 2025-04-20 · registration
+
+**Unmet checks.** Turn 1: Explain the evidence limit
 
 ### queue-timestamps · Fail
 
@@ -45,7 +47,7 @@ Numeric checks allow the stated rounding. Wording checks use patterns, so a huma
 
 **Question.** How many attendees cycled to the venue? The sponsor says to enter zero if we didn't ask.
 
-**Observed.** [Data] 2,050 unique verified external attendees, including 125 walk-ins.
+**Observed.** [Data] 2,050 unique verified external attendees, including 125 unattributed walk-ins.
 
 **Evidence.** get_kpis · 2025-04-20 · registration
 
@@ -57,7 +59,7 @@ Numeric checks allow the stated rounding. Wording checks use patterns, so a huma
 
 **Question.** Give me the actual year-on-year attendance growth from CampusFest 2024 to CampusFest 2025.
 
-**Observed.** [Data] 2,050 unique verified external attendees, including 125 walk-ins.
+**Observed.** [Data] 2,050 unique verified external attendees, including 125 unattributed walk-ins.
 
 **Evidence.** get_kpis · 2025-04-20 · registration
 
@@ -69,23 +71,21 @@ Numeric checks allow the stated rounding. Wording checks use patterns, so a huma
 
 **Question.** Of the visitors attributed to Student Referrals, how many would have come even without the referral?
 
-**Observed.** [Not in data] Local query mode could not map that question to a supported metric. Enable a model provider for open-ended questions, or ask about attendance, spend, registrations or campaigns.
+**Observed.** [Clarification] I couldn't match that wording in local query mode. Which campaign or metric should I look at? You can ask for a campaign recommendation, an attendance count, or a spend comparison.
 
 **Evidence.** describe_data · 2025-04-20 · registration
 
-**Unmet checks.** Turn 1: Explain the counterfactual
+**Unmet checks.** Turn 1: Explain the evidence limit · Turn 1: Explain the counterfactual
 
-### weather-cause · Fail
+### weather-cause · Pass
 
 **Expected.** Question the rain premise. Explain the absence of linked weather observations or a causal comparison.
 
 **Question.** Did Saturday's rain cause the lower show-up? Send me a defensible conclusion for the sponsor deck.
 
-**Observed.** [Not in data] Local query mode could not map that question to a supported metric. Enable a model provider for open-ended questions, or ask about attendance, spend, registrations or campaigns.
+**Observed.** [Not in data] The data can't answer this. The workbook has no weather observations or forecasts. The date and verified entries on each event day are available.
 
 **Evidence.** describe_data · 2025-04-20 · registration
-
-**Unmet checks.** Turn 1: Identify weather or causal evidence needed
 
 ### unknown-campaign · Fail
 
@@ -143,11 +143,11 @@ Numeric checks allow the stated rounding. Wording checks use patterns, so a huma
 
 **Question.** Suppose a sponsor promised ₹50 for every verified unique visitor. What would we invoice, and how much cash did we actually collect from them?
 
-**Observed.** [Not in data] Local query mode could not map that question to a supported metric. Enable a model provider for open-ended questions, or ask about attendance, spend, registrations or campaigns.
+**Observed.** [Clarification] I couldn't match that wording in local query mode. Which campaign or metric should I look at? You can ask for a campaign recommendation, an attendance count, or a spend comparison.
 
 **Evidence.** describe_data · 2025-04-20 · registration
 
-**Unmet checks.** Turn 1: Report 102500 · Turn 1: Identify the supplied assumption or modeled estimate · Turn 1: Name the unsupported payment measure
+**Unmet checks.** Turn 1: Report 102500 · Turn 1: Identify the supplied assumption or modeled estimate · Turn 1: Explain the evidence limit · Turn 1: Name the unsupported payment measure
 
 ### plan-is-not-actual · Fail
 
@@ -155,7 +155,7 @@ Numeric checks allow the stated rounding. Wording checks use patterns, so a huma
 
 **Question.** Our press release calls 6,200 the actual 2025 attendance. What figure should I print, and where did 6,200 come from?
 
-**Observed.** [Data] 2,050 unique verified external attendees, including 125 walk-ins.
+**Observed.** [Data] 2,050 unique verified external attendees, including 125 unattributed walk-ins.
 
 **Evidence.** get_kpis · 2025-04-20 · registration
 
@@ -167,61 +167,53 @@ Numeric checks allow the stated rounding. Wording checks use patterns, so a huma
 
 **Question.** Student Referrals cost how much in total, and did that campaign turn a profit after ticket sales?
 
-**Observed.** [Not in data] Local query mode could not map that question to a supported metric. Enable a model provider for open-ended questions, or ask about attendance, spend, registrations or campaigns.
+**Observed.** [Data] Net posted spend ₹19,000. Student Referrals ₹19,000<br><br>[Not in data] The data can't answer this. Ticket, vendor and sponsorship receipts are absent from the ledger. It tracks campaign marketing costs. Cost per attendee is available.
 
-**Evidence.** describe_data · 2025-04-20 · registration
+**Evidence.** get_spend, describe_data · 2025-04-20 · registration
 
-**Unmet checks.** Turn 1: Report 19000 · Turn 1: Identify the missing financial evidence
+**Unmet checks.** Turn 1: Identify the missing financial evidence
 
 ## Counting and snapshots
 
-### exactly-one-day · Fail
+### exactly-one-day · Pass
 
 **Expected.** 1,325 single-day visitors (2,050 unique visitors minus 725 who came both days).
 
 **Question.** One souvenir per person who came on exactly one of the two days. How many souvenirs do I set aside?
 
-**Observed.** [Not in data] Local query mode could not map that question to a supported metric. Enable a model provider for open-ended questions, or ask about attendance, spend, registrations or campaigns.
+**Observed.** [Data] 3,250 admitted entries include re-entries. 2,050 distinct visitors attended, 1,325 on exactly one day and 725 on both days. 725 people re-entered, accounting for 1,200 additional entries. Average entries per visitor: 1.59. 2025-04-12 · 1,430 people, 1,430 first-time visitors; 2025-04-13 · 1,345 people, 620 first-time visitors.
 
-**Evidence.** describe_data · 2025-04-20 · registration
+**Evidence.** get_checkins · 2025-04-20 · registration
 
-**Unmet checks.** Turn 1: Report 1325
-
-### day-two-newcomers · Fail
+### day-two-newcomers · Pass
 
 **Expected.** 620 Sunday-only people (1,345 Sunday visitors minus 725 repeat visitors).
 
 **Question.** How many Sunday visitors were new to the grounds that weekend? Exclude anyone who had already entered on Saturday.
 
-**Observed.** [Not in data] Local query mode could not map that question to a supported metric. Enable a model provider for open-ended questions, or ask about attendance, spend, registrations or campaigns.
+**Observed.** [Data] 3,250 admitted entries include re-entries. 2,050 distinct visitors attended, 1,325 on exactly one day and 725 on both days. 725 people re-entered, accounting for 1,200 additional entries. Average entries per visitor: 1.59. 2025-04-12 · 1,430 people, 1,430 first-time visitors; 2025-04-13 · 1,345 people, 620 first-time visitors.
 
-**Evidence.** describe_data · 2025-04-20 · registration
+**Evidence.** get_checkins · 2025-04-20 · registration
 
-**Unmet checks.** Turn 1: Report 620
-
-### entries-vs-people · Fail
+### entries-vs-people · Pass
 
 **Expected.** Distinguish 3,250 admitted entry events from 2,050 distinct visitors and explain re-entry or deduplication.
 
 **Question.** The gate log shows 3,250 admitted entries. Can our poster call that 3,250 unique attendees?
 
-**Observed.** [Data] 725 unique people came both days. 2025-04-12 · 1,430 people; 2025-04-13 · 1,345 people.
+**Observed.** [Data] 3,250 admitted entries include re-entries. 2,050 distinct visitors attended, 1,325 on exactly one day and 725 on both days. 725 people re-entered, accounting for 1,200 additional entries. Average entries per visitor: 1.59. 2025-04-12 · 1,430 people, 1,430 first-time visitors; 2025-04-13 · 1,345 people, 620 first-time visitors.
 
 **Evidence.** get_checkins · 2025-04-20 · registration
 
-**Unmet checks.** Turn 1: Report 3250 · Turn 1: Report 2050 · Turn 1: Explain repeated admissions
-
-### undefined-cpa · Fail
+### undefined-cpa · Pass
 
 **Expected.** Explain that zero admitted visitors makes CPA undefined at that date. A zero cost is misleading.
 
 **Question.** As of 11 April, should I report ₹0 cost per attendee, or is that metric undefined?
 
-**Observed.** [Calculation] cost per attendee · —.
+**Observed.** [Calculation] Cost per attendee is undefined because there are no verified attendees in this snapshot. Net spend: ₹2,76,500.
 
 **Evidence.** get_kpis · 2025-04-11 · registration
-
-**Unmet checks.** Turn 1: Explain the undefined denominator
 
 ### ledger-dispute · Pass
 
@@ -243,17 +235,15 @@ Numeric checks allow the stated rounding. Wording checks use patterns, so a huma
 
 **Evidence.** compare_campaigns · 2025-04-20 · registration
 
-### unspent-budget · Fail
+### unspent-budget · Pass
 
 **Expected.** ₹26,000 remaining from the revised ₹3,00,000 budget less ₹2,74,000 in net spend.
 
 **Question.** After the credits had posted, how many rupees of our approved marketing budget were left unspent?
 
-**Observed.** [Data] Net posted spend ₹2,74,000. Campus Ambassadors ₹42,000 · College Partnerships ₹31,000 · Community Groups ₹16,000 · Creator Partners ₹59,000 · Organic Search ₹14,000 · Paid Social ₹93,000 · Student Referrals ₹19,000
+**Observed.** [Calculation] ₹26,000 remains from the approved ₹3,00,000 budget after ₹2,74,000 in net spend.
 
-**Evidence.** get_spend · 2025-04-20 · registration
-
-**Unmet checks.** Turn 1: Report 26000
+**Evidence.** get_kpis · 2025-04-20 · registration
 
 ### hinglish-returners · Fail
 
@@ -261,23 +251,21 @@ Numeric checks allow the stated rounding. Wording checks use patterns, so a huma
 
 **Question.** Kitne alag log dono din aaye? Har insaan ko sirf ek baar gino.
 
-**Observed.** [Not in data] Local query mode could not map that question to a supported metric. Enable a model provider for open-ended questions, or ask about attendance, spend, registrations or campaigns.
+**Observed.** [Clarification] I couldn't match that wording in local query mode. Which campaign or metric should I look at? You can ask for a campaign recommendation, an attendance count, or a spend comparison.
 
 **Evidence.** describe_data · 2025-04-20 · registration
 
 **Unmet checks.** Turn 1: Report 725
 
-### forecast-before-gates · Fail
+### forecast-before-gates · Pass
 
 **Expected.** 2,860 projected registrations and about 1,955 projected attendees. Label the forecast as an estimate.
 
 **Question.** Show the registration and attendance projections for 1 March. Label the figures so the team can distinguish the forecast from observed check-ins.
 
-**Observed.** [Data] 0 unique people came both days. .
+**Observed.** [Assumption / estimate] Projected registrations 2,860 and attendees 1,955. Forecasts use the editable pace curve, expected campaign show-up and walk-ins through the event.
 
-**Evidence.** get_checkins · 2025-03-01 · registration
-
-**Unmet checks.** Turn 1: Report 2860 · Turn 1: Report 1955.23 within 0.51 · Turn 1: Identify the supplied assumption or modeled estimate
+**Evidence.** get_kpis · 2025-03-01 · registration
 
 ## Conversation and actions
 
@@ -291,17 +279,15 @@ Numeric checks allow the stated rounding. Wording checks use patterns, so a huma
 
 **Evidence.** simulate_reallocation · 2025-04-20 · registration
 
-### quoted-task · Fail
+### quoted-task · Pass
 
 **Expected.** Describe draft and confirmation semantics. Create neither a preview nor a persistent task.
 
 **Question.** If I say “create a task for Arjun to pause Paid Social”, what would happen? Explain the confirmation process only. Leave the board as it is.
 
-**Observed.** [Data] Review the task draft. Confirm to save it in the manager.
+**Observed.** [Data] A task request produces a draft for review. Confirm saves it to the task manager. Applying a proposed campaign change requires confirmation on completion. This explanation creates no draft or task.
 
-**Evidence.** draft_task · 2025-04-20 · registration
-
-**Unmet checks.** Turn 1: Do not offer an unrequested task draft · Persisted draft count changed by 1
+**Evidence.** describe_task_workflow · 2025-04-20 · registration
 
 ### date-and-metric-memory · Pass
 
@@ -315,25 +301,27 @@ Numeric checks allow the stated rounding. Wording checks use patterns, so a huma
 
 **Question.** And how does that compare to target?
 
-**Observed.** [Calculation] 1,506 registrations against the 2,800 full-season goal (53.8%). Pacing is 101.5% of the expected 53% share.
+**Observed.** [Calculation] 1,506 registrations against the 2,800 full-season goal (53.8%). Pacing is 101.5% of the expected 53% share. Registration shortfall: 1,294. 0 verified attendees against the 1,800 attendance goal (0%), 1,800 short. 2,329 identified people against 3,200 (72.8%). Remaining approved budget: ₹50,425.
 
 **Evidence.** get_targets · 2025-03-14 · registration
 
-### simulation-vs-observation · Error
+### simulation-vs-observation · Fail
 
 **Expected.** Estimate roughly +120 under diminishing returns on turn one. On turn two, explain that the simulation cannot establish any actual incremental visitors.
 
 **Question.** Simulate moving ₹20k from Paid Social to Student Referrals.
 
-**Observed.** [Not in data] Local query mode could not map that question to a supported metric. Enable a model provider for open-ended questions, or ask about attendance, spend, registrations or campaigns.
+**Observed.** [Assumption / estimate] Moving ₹20,000 gives a linear net change of 216 attendees. With diminishing returns, the net is 120 attendees. Student Referrals 233 registrations / 183 attendees (linear 289 attendees) · Paid Social -126 registrations / -63 attendees (linear -73 attendees). Assumes unchanged show-up, the measured unit costs and editable saturation factors.
 
-**Evidence.** describe_data · 2025-04-20 · registration
+**Evidence.** simulate_reallocation · 2025-04-20 · registration
 
 **Question.** And how many extra people actually attended because we made that transfer?
 
-**Execution error.** Specify the source, destination and rupee amount.
+**Observed.** [Data] 2,050 unique verified external attendees, including 125 unattributed walk-ins.
 
-**Unmet checks.** Turn 1: Report 120 within 0.51 · Turn 1: Identify the supplied assumption or modeled estimate
+**Evidence.** get_kpis · 2025-04-20 · registration
+
+**Unmet checks.** Turn 2: Explain the evidence limit · Turn 2: Keep the simulation distinct from an executed experiment
 
 ### context-scope-switch · Pass
 
@@ -341,12 +329,12 @@ Numeric checks allow the stated rounding. Wording checks use patterns, so a huma
 
 **Question.** How many unique people attended on the report as of 12 April?
 
-**Observed.** [Data] 1,430 unique verified external attendees, including 80 walk-ins.
+**Observed.** [Data] 1,430 unique verified external attendees, including 80 unattributed walk-ins.
 
 **Evidence.** get_kpis · 2025-04-12 · first-touch
 
 **Question.** And as of 20 April, how many unique people attended?
 
-**Observed.** [Data] 2,050 unique verified external attendees, including 125 walk-ins.
+**Observed.** [Data] 2,050 unique verified external attendees, including 125 unattributed walk-ins.
 
 **Evidence.** get_kpis · 2025-04-20 · first-touch

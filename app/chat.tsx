@@ -153,7 +153,7 @@ export function Copilot({
                   </summary>
                   {m.calls.map((r: Row, j: number) => (
                     <details key={j}>
-                      <summary>{r.tool}</summary>
+                      <summary>{r.ref ? r.ref + " · " : ""}{r.tool}</summary>
                       <pre>
                         {JSON.stringify(
                           { parameters: r.parameters, result: r.data },

@@ -5,6 +5,8 @@ import fs from "node:fs";
 import { spawn } from "node:child_process";
 import { setTimeout as wait } from "node:timers/promises";
 process.env.GROWTH_TEST = "1";
+process.env.GROWTH_FIXTURE = "browser";
+if (process.argv.includes("--local")) process.env.COPILOT_PROVIDER = "local";
 const { seed } = await import("./seed.mjs");
 await seed();
 const port = process.env.GROWTH_BROWSER_PORT || "3149",
@@ -155,6 +157,10 @@ try {
   if (process.argv.includes("--record")) {
     const {recordDemo}=await import("./record-demo.mjs");
     await recordDemo(browser,url);
+  }
+  if (process.argv.includes("--record-bank")) {
+    const {recordQuestionBankDemo} = await import("./record-demo.mjs");
+    await recordQuestionBankDemo(browser, url);
   }
 } catch (error) {
   if (page) {
