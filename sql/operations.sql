@@ -38,11 +38,11 @@ do $$begin
  end if;
 exception when duplicate_object or unique_violation then null;
 end$$;
--- Hosted (non-superuser) owners need membership to `set role growth_reader`.
+-- Hosted (non-superuser) owners such as Neon's get an automatic CREATEROLE
+-- membership without the SET option on PostgreSQL 16+, so `set role
+-- growth_reader` fails until it is granted explicitly. Idempotent.
 do $$begin
- if not pg_has_role(current_user,'growth_reader','member') then
-  execute format('grant growth_reader to %I', current_user);
- end if;
+ execute format('grant growth_reader to %I with set true', current_user);
 exception when others then null;
 end$$;
 analyze;
