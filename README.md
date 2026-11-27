@@ -1,6 +1,9 @@
 # Deccan Drift Growth Center
 
-A local operating dashboard for the Deccan Drift Pune 2027 attendee-growth strategy. The historical workspace reconstructs CampusFest 2025 from the original attendee workbook. The Plan screen imports the 2027 proposals and their assumptions separately. Open the running app at [127.0.0.1:3000](http://127.0.0.1:3000).
+A local operating dashboard for the Deccan Drift Pune 2027 attendee-growth strategy. The historical workspace reconstructs CampusFest 2025 from the original attendee workbook. The Plan screen imports the 2027 proposals and their assumptions separately.
+
+- **Live deployment:** [deccan-drift-growth-center.vercel.app](https://deccan-drift-growth-center.vercel.app), running on Vercel with a Neon PostgreSQL database and the OpenAI copilot. See [Hosted deployment](#hosted-deployment).
+- **Local:** open the running app at [127.0.0.1:3000](http://127.0.0.1:3000) after following [Run locally](#run-locally).
 
 ## Run locally
 
@@ -58,6 +61,55 @@ The suite checks the displayed answer, conversation scope and changes to drafts 
 
 The recorded live OpenAI baseline passed 8/27 challenge scenarios. One reply correctly reported ₹134 blended CPA but omitted the missing competitor benchmark. The updated local run passed 23/23 original checks and 13/27 challenges. The supplied bank uses separate conversations, fixtures and review criteria. [Local challenge transcripts](eval/challenge-results-local.md) · [Live OpenAI baseline](eval/challenge-results-openai.md) · [Supplied bank assessment](eval/question-bank-review.md)
 
+## Hosted deployment
+
+The app is deployed at [deccan-drift-growth-center.vercel.app](https://deccan-drift-growth-center.vercel.app). The Vercel project is connected to this GitHub repository, so every push to `main` deploys to production. The database is a Neon PostgreSQL instance provisioned through the Vercel Marketplace.
+
+The live site has no login. Anyone with the URL can edit or reset the data and send copilot questions that use the configured OpenAI key. Enable Vercel deployment protection, or add authentication, before sharing it widely.
+
+### How hosted mode differs from local mode
+
+Vercel functions have no `psql`, `initdb` or Python, so the same code switches behaviour when it runs there.
+
+| Concern | Local | Hosted (Vercel) |
+|---|---|---|
+| Database access | `psql` against the private cluster in `.growth-pg` | The `pg` Node driver, enabled when `DATABASE_URL` is set and `VERCEL` (or `GROWTH_DRIVER=pg`) is present. It reproduces `psql -qAt` output, so query results are identical. [Database layer](lib/db.mjs) |
+| Connection | One `psql` session per query | `DATABASE_URL_UNPOOLED` when available. Evidence queries create temporary tables in one transaction and read them in the next, which a transaction-mode pooler can route to different sessions. Temporary objects are discarded after each call. |
+| Seed and reset | `scripts/extract.py` reads the workbooks | Falls back to the pre-extracted [sql/seed-data.sql](sql/seed-data.sql), and converts its `COPY` blocks to batched `INSERT`s. **Data editor → Reset to original** therefore works on Vercel. [Seed script](scripts/seed.mjs) |
+| Read-only role | Created by the local superuser | The seed also grants `growth_reader` to the database owner `WITH SET TRUE`. On PostgreSQL 16+, a CREATEROLE owner such as Neon's otherwise cannot `SET ROLE` to it. [Operations](sql/operations.sql) |
+
+`next.config.mjs` includes `sql/` and the workbooks in the API function bundle, because they are read from disk at runtime. `.npmrc` sets `legacy-peer-deps=true`, so Vercel installs dependencies the same way as `npm ci --legacy-peer-deps`.
+
+After changing either workbook, regenerate the snapshot and commit it:
+
+```powershell
+python scripts/extract.py > sql/seed-data.sql
+```
+
+### Deploying your own copy
+
+Use the Vercel CLI (`npm.cmd i -g vercel`) from the project directory.
+
+```powershell
+vercel.cmd link
+vercel.cmd integration add neon            # provisions Postgres and sets DATABASE_URL*
+vercel.cmd env add COPILOT_PROVIDER production
+vercel.cmd env add OPENAI_API_KEY production
+vercel.cmd env add OPENAI_MODEL production
+vercel.cmd env pull .env.vercel --environment production
+```
+
+Seed the hosted database once from your machine, using the unpooled URL from `.env.vercel`. The file is ignored by git, but it contains credentials.
+
+```powershell
+$env:GROWTH_DRIVER = "pg"
+$env:DATABASE_URL = "<DATABASE_URL_UNPOOLED value from .env.vercel>"
+npm.cmd run seed
+Remove-Item Env:GROWTH_DRIVER, Env:DATABASE_URL
+```
+
+Then deploy with `vercel.cmd deploy --prod`, or push to the connected branch. Re-seed only when the SQL in `sql/` or the workbook snapshot changes. Application-only changes need a deploy alone.
+
 ## Product walkthrough
 
 | Screen | What the team can do |
@@ -102,9 +154,9 @@ flowchart LR
 ```
 
 - The import preserves duplicate rows, column names, stable IDs and the field dictionary. It reads the model workbook's cached numeric results at full precision. Recalculate and save a modified model workbook in a spreadsheet editor before re-importing. [Workbook reader](scripts/extract.py)
-- The workspace uses PostgreSQL 16 locally in place of a hosted Supabase project. Next.js 16.2.12 App Router, TypeScript 5.9.3 and React 19.2.4 serve the product. Recharts 3.10.0 draws the charts. Tailwind CSS 4.1.18, custom CSS, Lucide icons and Radix Dialog underpin the interface. The implementation uses a custom interface, workbook reader, SQL metrics, management endpoints and provider adapters. Codex assisted with implementation and verification. [Package versions](package.json)
+- The workspace uses PostgreSQL 16 locally. The hosted deployment uses Neon PostgreSQL through the `pg` driver. Next.js 16.2.12 App Router, TypeScript 5.9.3 and React 19.2.4 serve the product. Recharts 3.10.0 draws the charts. Tailwind CSS 4.1.18, custom CSS, Lucide icons and Radix Dialog underpin the interface. The implementation uses a custom interface, workbook reader, SQL metrics, management endpoints and provider adapters. Codex assisted with implementation and verification. [Package versions](package.json)
 - All changes go through server routes. PostgreSQL computes the analytical metrics at query time. Dashboard sections and copilot tools query the same definitions. Management writes and their audit entries commit together. Client reads are refreshed after each write. [Metric definitions](sql/metrics.sql) · [Operations and triggers](sql/operations.sql) · [Evidence tools](lib/evidence.mjs)
-- Hosting is deferred. A future private deployment can point `DATABASE_URL` at a dedicated PostgreSQL database and run this Node application on a host with Python, the workbooks and `psql`. The database seed requires permission to create its schemas and restricted reader role. A stock Vercel serverless deployment would require a network PostgreSQL driver and a separate seed/reset job in place of local executables. No cloud resources or paid subscriptions were provisioned.
+- The production deployment runs on Vercel Functions (Node.js) with a free-plan Neon database. The database seed requires permission to create its schemas and the restricted reader role. See [Hosted deployment](#hosted-deployment).
 
 ## Cleaning and metric definitions
 
@@ -191,5 +243,5 @@ Provider mode: **local**. Database: isolated test database, restored from both o
 - Task previews are stored separately from tasks. Confirming the same draft twice produces one task. A completion with a proposed campaign change requires confirmation and updates the campaign and task in one transaction. “By Friday” resolves against the actual current date in Asia/Kolkata.
 - The source event and people are synthetic. Campaign attribution is observational. Reallocation estimates assume stable show-up and an editable cost curve. Using the 2025 pace curve and final show-up assumptions to back-test 2025 is partly circular. Source outcomes, observed historical metrics and forward assumptions have distinct roles. See the **Assumptions** worksheet for the market research and the distinction between sourced and assumed inputs. [2027 model](DeccanDrift_Pune_2027_Model.xlsx)
 - The rounded brief calls the scenarios 6,200 and 10,300 attendees. The imported model yields approximately 6,196 and 10,332. Creator Partners maps to C03 in the workbook. Its final two completed weekly CPRs are ₹129.79 and ₹225.93 against a ₹140.63 stop threshold, so the original dataset produces CHANGE. A future data edit can legitimately produce STOP.
-- The user picker provides attribution for local work. A shared public deployment needs access control. Model intent selection can be wrong, and unsupported questions in local mode require either a provider or a more specific query. Mode-specific testing distinguishes deterministic local coverage from provider behavior.
+- The user picker provides attribution, not authentication. The current public deployment has no access control. Protect it before sharing it beyond reviewers. Model intent selection can be wrong, and unsupported questions in local mode require either a provider or a more specific query. Mode-specific testing distinguishes deterministic local coverage from provider behavior.
 
