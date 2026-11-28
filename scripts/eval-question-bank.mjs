@@ -36,7 +36,10 @@ for (const line of fs.readFileSync("Copilot_Test_Questions.md", "utf8").split(/\
 cases.set("K", { id: "K", expected: demo.join("\n"), turns: [], notes: [] });
 assert.equal(cases.size, 111, "Review the scenario mapping if the bank changes");
 const clean = text => text.replaceAll("*", "").replaceAll("\x60", "").trim();
-const resultFile = "eval/question-bank-transcript-" + mode + ".md";
+const label = process.argv.find(arg => arg.startsWith("--label="))?.slice(8);
+if (label !== undefined && !/^[a-z0-9][a-z0-9-]{0,40}$/.test(label)) throw Error("Use a short lowercase run label.");
+const runName = label ? mode + "-" + label : mode;
+const resultFile = "eval/question-bank-transcript-" + runName + ".md";
 const worksheet = [];
 const state = () => scalar("select (select count(*) from tasks) tasks, (select count(*) from drafts) drafts");
 let executed = 0;
@@ -198,7 +201,7 @@ function writeTranscript() {
     worksheet.push({id:item.id,turns:item.turns,notes:item.notes});
   }
   fs.mkdirSync(".local", {recursive:true});
-  fs.writeFileSync(".local/question-bank-" + mode + ".json", JSON.stringify(worksheet,null,2));
+  fs.writeFileSync(".local/question-bank-" + runName + ".json", JSON.stringify(worksheet,null,2));
   fs.writeFileSync(resultFile,lines.join("\n"));
 }
 

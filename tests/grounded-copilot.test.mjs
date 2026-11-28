@@ -67,7 +67,7 @@ test("An unsupported amount is retried and replaced by a sourced answer", async 
 
 test("Repeatedly unsupported replies fall back to the database summary", async t => {
   const unsupported = message("[Data] We had 87,654 visitors. [E1]");
-  mockOpenAI(t, [[call("get_kpis", { metric: "attendees" })], ...Array(5).fill([unsupported])]);
+  mockOpenAI(t, [[call("get_kpis", { metric: "attendees" })], ...Array(7).fill([unsupported])]);
   const reply = await ask("How many visitors attended?");
   assert.match(reply.answer, /2,050/);
   assert.doesNotMatch(reply.answer, /87,654/);
@@ -153,4 +153,130 @@ test("An actual task request creates exactly one preview and no saved task", asy
   const reply = await ask("Please create a task to review campaign budgets.");
   assert.equal(reply.draft.title, "Review campaign budgets");
   assert.deepEqual(await tasks(), { tasks: before.tasks, drafts: before.drafts + 1 });
+});
+
+test("OpenAI task drafts resolve a first-name owner, campaign name and 'by Friday' from today", async t => {
+  const { friday } = await import("../lib/copilot.mjs");
+  const requests = mockOpenAI(t, [
+    // The model's real failing call: a first name and a Friday counted from the historical as-of date.
+    [call("draft_task", { title: "Cut Creator Partners spend", owner: "Arjun", deadline: "2025-04-25", campaign: "Creator Partners" })],
+    [message("[Data] Review the task draft and confirm to save it. [E1]")],
+  ]);
+  const reply = await ask("Please draft a task to cut Creator Partners spend by Friday. Assign it to Arjun.");
+  assert.equal(reply.draft.owner, "Arjun Verma");
+  assert.equal(reply.draft.campaign_id, "C03");
+  assert.equal(reply.draft.deadline, friday());
+  assert.deepEqual(reply.draft.proposed, { status: "paused" });
+  assert.equal(reply.scope.as_of, ctx.d);
+  const tool = requests[0].tools.find(x => x.name === "draft_task");
+  assert.ok(tool.parameters.properties.owner.enum.includes("Arjun Verma"));
+});
+
+test("An unknown owner returns the valid owners to the model, and a failed request explains why", async t => {
+  const bad = call("draft_task", { title: "Audit tracking", owner: "Arjun Singh" });
+  const requests = mockOpenAI(t, [[bad], ...Array(7).fill([message("[Data] Done.")])]);
+  const reply = await ask("Please create a task to audit Community Groups tracking.");
+  const output = requests[1].input.find(item => item.type === "function_call_output").output;
+  assert.match(output, /Choose one of: Pranit, Meera Iyer, Arjun Verma/);
+  assert.equal(reply.draft, null);
+  assert.match(reply.answer, /Unknown task owner/);
+});
+
+test("Relative deadlines and owner names resolve deterministically", async () => {
+  const { relativeDeadline, resolveOwner } = await import("../lib/copilot.mjs");
+  const today = "2026-11-28"; // a Saturday
+  assert.equal(relativeDeadline("cut spend by Friday", today), "2026-12-04");
+  assert.equal(relativeDeadline("brief leads next week", today), "2026-12-05");
+  assert.equal(relativeDeadline("call them tomorrow", today), "2026-11-29");
+  assert.equal(relativeDeadline("due next Saturday", today), "2026-12-05");
+  assert.equal(relativeDeadline("audit tracking", today), null);
+  assert.equal(resolveOwner("meera", "Pranit"), "Meera Iyer");
+  assert.equal(resolveOwner("me", "Nisha Rao"), "Nisha Rao");
+  assert.equal(resolveOwner("Arjun Singh", "Pranit"), null);
+});
+
+test("Direct measures keep their denominators and campaign filters in OpenAI mode", async t => {
+  mockOpenAI(t, []);
+  for (const [question, expected] of [
+    ["Which campaign has the highest cancellation rate?", /Creator Partners[^\n]*36 cancelled registrations \/ 350 registrations = 10\.3%/],
+    ["Compare CTR for C02 vs C05", /Paid Social[^\n]*2\.1%[\s\S]*Student Referrals[^\n]*4\.8%|Student Referrals[^\n]*4\.8%[\s\S]*Paid Social[^\n]*2\.1%/],
+    ["What is the email click-to-open rate?", /409 email clicks \/ 992 opens = 41\.2%/],
+    ["How many people opted out of emails?", /229 people who opted out/],
+    ["C02 cost per attendee?", /Paid Social[^\n]*340 attributed attendees = ₹273\.53/],
+    ["Calculate 12.5 percent of INR 48,000", /6,000/],
+    ["What's 15% of 2,74,000?", /41,100/],
+    ["What was our sponsorship income?", /receipts are absent/],
+    ["How many people will come in 2027?", /\[Assumption \/ estimate\].*2027 committed plan/],
+    ["How's Arjun doing?", /Arjun Verma[^\n]*₹200[^\n]*₹1,07,000[^\n]*535/],
+  ]) {
+    const reply = await ask(question);
+    assert.match(reply.answer,expected,question);
+    assert.ok(reply.calls.length,question);
+  }
+});
+
+test("A changed campaign count recalculates its CPA and leaves the blended denominator separate", async t => {
+  mockOpenAI(t, []);
+  const {sql} = await import("../lib/db.mjs");
+  // One additional verified entry for a registered person who has never entered.
+  const row = await scalar("select r.person_id,r.registration_id from fn_regs('2025-04-20','registration') r where cid='C02' and not exists (select 1 from fn_visitors('2025-04-20','registration') v where v.person_id=r.person_id) limit 1");
+  const {literal:L} = await import("../lib/db.mjs");
+  try {
+    await sql("insert into raw_checkins(event_id,person_id,registration_id,campaign_id,occurred_at,result,verification,source) values ('REGRESSION-CPA'," +
+      L(row.person_id) + "," + L(row.registration_id) + ",'C02','2025-04-12T18:00:00+05:30','admitted','verified','scanner')");
+    const reply = await ask("What was the CPA for Paid Social?");
+    assert.match(reply.answer,/341 attributed attendees = ₹272\.73/);
+    const early = await ask("What was the CPA for C02?",{as_of:"2025-04-11"});
+    assert.match(early.answer,/no eligible|undefined/i);
+  } finally { await sql("delete from raw_checkins where event_id='REGRESSION-CPA'"); }
+});
+
+test("Counterfactuals use scoped observations and label assumptions", async t => {
+  mockOpenAI(t,[]);
+  for (const [q,expected] of [
+    ["What if we had never run Creator Partners?", [/59,000/,/175 attributed attendees/,/1,875/,/114\.67/]],
+    ["If Paid Social's show-up were as good as Referrals' (78.6%), how many more attendees?", [/78\.6%/,/680/,/534/,/194/]],
+    ["How much budget is left and how many attendees could it buy at our best CPA?", [/26,000/,/69\.09/,/376/,/linear estimate/]],
+  ]) {
+    const r = await ask(q);
+    assert.equal(r.calls[0].tool,"estimate_campaign");
+    assert.match(r.answer,/^\[Assumption \/ estimate\]/);
+    for (const value of expected) assert.match(r.answer,value);
+  }
+});
+
+test("Unsupported campaign measures cannot silently become CPA, and spend cannot verify receipts", async () => {
+  await assert.rejects(evidence("compare_campaigns",{metric:"cancellation_rate"},ctx),/get_channel_measure/);
+  const ledger = [{tool:"get_spend",tag:"Data",answer:"Net posted spend ₹2,74,000.",data:{spend:274000}}];
+  assert.equal(groundedReply("[Data] Sponsors paid ₹2,74,000. [E1]",ledger,"How much did the sponsors pay?"),null);
+});
+
+test("A provider cannot turn an unsupported operand into a cited result", async t => {
+  const requests = mockOpenAI(t,[[call("calculate",{expression:"987654 * 100"})],
+    [call("get_kpis",{metric:"attendees"})],[message("[Data] There were 2,050 attendees. [E1]")]]);
+  const r = await ask("How large was the verified festival audience?");
+  assert.match(requests[1].input.find(x=>x.type==="function_call_output").output,/987654 has no source/);
+  assert.equal(r.calls[0].tool,"get_kpis");
+});
+
+test("Each assignment can be confirmed independently and only its own change is proposed", async t => {
+  mockOpenAI(t, []);
+  const {resolveDraft} = await import("../lib/copilot.mjs");
+  const before = await tasks();
+  const r = await ask("Create a task for Nisha to pause Creator Partners and one for Arjun to test a ₹99 deposit on Paid Social, due next Friday.");
+  assert.deepEqual(r.drafts.map(d => [d.owner,d.campaign_id,d.proposed]),[
+    ["Nisha Rao","C03",{status:"paused"}],["Arjun Verma","C02",null],
+  ]);
+  assert.deepEqual(await tasks(),{tasks:before.tasks,drafts:before.drafts+2});
+  const act = (draft,decision) => resolveDraft({draft_id:draft.id,conversation:r.conversation,decision},ctx.user);
+  assert.equal((await act(r.drafts[0],"cancel")).saved,false);
+  const saved = await act(r.drafts[1],"confirm");
+  assert.equal((await act(r.drafts[1],"confirm")).id,saved.id);
+  assert.equal((await tasks()).tasks,before.tasks+1);
+  const list = await ask("What tasks does Arjun have?");
+  const done = await ask("Mark that task as done.",{conversation:list.conversation});
+  assert.equal(done.draft.task_id,saved.id);
+  assert.equal(done.draft.owner,"Arjun Verma");
+  await resolveDraft({draft_id:done.draft.id,conversation:done.conversation,decision:"confirm"},ctx.user);
+  assert.equal((await scalar("select status from tasks where id='"+saved.id+"'")).status,"done");
 });

@@ -92,9 +92,12 @@ try {
   await page.getByRole("button", { name: "Growth Copilot" }).click();
   await page
     .getByLabel("Copilot question")
-    .fill("Create a task for Arjun to cut Creator Partners spend by Friday");
+    .fill("Create a task for Arjun to cut Creator Partners spend and one for Nisha to review Paid Social, due Friday.");
   await page.getByRole("button", { name: "Send question" }).click();
-  await page.getByRole("button", { name: "Confirm", exact: true }).click();
+  const secondDraft = page.locator(".draft").filter({ hasText: "Nisha Rao" });
+  await secondDraft.getByRole("button", { name: "Cancel", exact: true }).click();
+  await secondDraft.getByText("Cancelled", {exact:true}).waitFor();
+  await page.locator(".draft").filter({hasText:"Arjun Verma"}).getByRole("button", { name: "Confirm", exact: true }).click();
   await page.getByText("Saved to task manager").waitFor();
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.locator(".task").filter({ hasText: "Creator Partners" }).click();

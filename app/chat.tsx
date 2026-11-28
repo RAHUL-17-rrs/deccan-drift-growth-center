@@ -66,22 +66,22 @@ export function Copilot({
       setBusy(false);
     }
   }
-  async function resolve(m: Row, decision: string) {
+  async function resolve(m: Row, draft: Row, decision: string) {
     setBusy(true);
     err("");
     try {
       const r = await api("draft", {
         conversation: m.conversation,
-        draft_id: m.draft.id,
+        draft_id: draft.id,
         decision,
-        edits: edit === m.draft.id ? draftEdits : {},
+        edits: edit === draft.id ? draftEdits : {},
       });
       persist(
         messages.map((x) =>
           x === m
             ? {
                 ...x,
-                resolved: r.saved ? "Saved to task manager" : "Cancelled",
+                resolutions: { ...x.resolutions, [draft.id]: r.saved ? "Saved to task manager" : "Cancelled" },
               }
             : x,
         ),
@@ -164,10 +164,10 @@ export function Copilot({
                     </details>
                   ))}
                 </details>
-                {m.draft && (
-                  <section className="draft">
+                {(m.drafts || (m.draft ? [m.draft] : [])).map((draft: Row) => (
+                  <section className="draft" key={draft.id}>
                     <b>Task draft</b>
-                    {edit === m.draft.id ? (
+                    {edit === draft.id ? (
                       <>
                         {["title", "owner", "deadline"].map((k) => (
                           <Field key={k} label={k}>
@@ -196,26 +196,26 @@ export function Copilot({
                       </>
                     ) : (
                       <>
-                        <p>{m.draft.title}</p>
+                        <p>{draft.title}</p>
                         <small>
-                          {m.draft.owner} · {day(m.draft.deadline)} ·{" "}
-                          {m.draft.campaign_id || "General"}
+                          {draft.owner} · {day(draft.deadline)} ·{" "}
+                          {draft.campaign_id || "General"}
                         </small>
-                        {m.draft.proposed && (
+                        {draft.proposed && (
                           <p>
-                            On completion · {JSON.stringify(m.draft.proposed)}
+                            On completion · {JSON.stringify(draft.proposed)}
                           </p>
                         )}
                       </>
                     )}
-                    {m.resolved ? (
-                      <div className="hint">{m.resolved}</div>
+                    {m.resolutions?.[draft.id] || m.resolved ? (
+                      <div className="hint">{m.resolutions?.[draft.id] || m.resolved}</div>
                     ) : (
                       <div className="tools">
                         <button
                           disabled={busy}
                           className="primary"
-                          onClick={() => resolve(m, "confirm")}
+                          onClick={() => resolve(m, draft, "confirm")}
                         >
                           <Check size={14} />
                           Confirm
@@ -223,22 +223,22 @@ export function Copilot({
                         <button
                           disabled={busy}
                           onClick={() => {
-                            setEdit(m.draft.id);
-                            update(m.draft);
+                            setEdit(draft.id);
+                            update(draft);
                           }}
                         >
                           Edit
                         </button>
                         <button
                           disabled={busy}
-                          onClick={() => resolve(m, "cancel")}
+                          onClick={() => resolve(m, draft, "cancel")}
                         >
                           Cancel
                         </button>
                       </div>
                     )}
                   </section>
-                )}
+                ))}
               </>
             )}
           </div>
