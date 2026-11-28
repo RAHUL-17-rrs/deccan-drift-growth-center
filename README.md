@@ -59,7 +59,9 @@ The cases cover outside sources, missing measurements, user-supplied assumptions
 
 The suite checks the displayed answer, conversation scope and changes to drafts and audited records. Each mode gets its own transcript in `eval/challenge-results-<mode>.md`. The runner returns a nonzero status for unmet checks or execution errors. API connection failures are reported separately. Wording checks are approximate. Use the prompts, expected answers and transcripts to review disputed grades.
 
-The recorded live OpenAI baseline passed 8/27 challenge scenarios. One reply correctly reported ₹134 blended CPA but omitted the missing competitor benchmark. The updated local run passed 23/23 original checks and 13/27 challenges. The supplied bank uses separate conversations, fixtures and review criteria. [Local challenge transcripts](eval/challenge-results-local.md) · [Live OpenAI baseline](eval/challenge-results-openai.md) · [Supplied bank assessment](eval/question-bank-review.md)
+The recorded live OpenAI baseline passed 8/27 challenge scenarios. One reply correctly reported ₹134 blended CPA but omitted the missing competitor benchmark. The updated local run passed 23/23 original checks and 13/27 challenges. [Local challenge transcripts](eval/challenge-results-local.md) · [Live OpenAI baseline](eval/challenge-results-openai.md)
+
+On the supplied 111-scenario question bank, OpenAI mode (`gpt-4.1-mini`) received 97 passes, 9 partial answers and 5 failures after the grounding, tool and task fixes, up from 56 passes, 26 partial answers and 29 failures before them. Diagnosis questions remain the weakest section. Local query mode received 100 passes, 8 partial answers and 3 failures after the fixes, up from 75 / 14 / 22. The bank uses separate conversations, fixtures and review criteria from the challenge suite. [OpenAI bank assessment](eval/question-bank-review-openai.md) · [Local assessment after fixes](eval/question-bank-review-local-after-fixes.md) · [Earlier local assessment](eval/question-bank-review.md)
 
 ## Hosted deployment
 

@@ -2,7 +2,7 @@
 
 **Local query mode completed 134 chat turns across 111 scenarios. The review found 75 passes, 14 partial answers and 22 failures.** All 15 basic facts passed. Multi-turn analysis, owner-level questions and unfamiliar calculations fell below the bank's acceptance targets. [Question bank](../Copilot_Test_Questions.md) · [Full answers, evidence traces and task outcomes](question-bank-transcript-local.md)
 
-The configured OpenAI adapter was also asked A1 through the chat service. Its connection failed with `EACCES` before a model reply. The last live OpenAI score is 8/27 on the separate challenge suite. A new live score for this bank requires a run from a machine that can reach the API. [Existing OpenAI challenge report](challenge-results-openai.md)
+The initial OpenAI attempt on A1 encountered `EACCES` before a model reply. A subsequent live run completed the same 111 scenarios and received 56 passes, 26 partial answers and 29 failures; after the fixes a second live run received 97 passes, 9 partial answers and 5 failures. The earlier 8/27 score used the separate challenge suite. [OpenAI question-bank review](question-bank-review-openai.md) · [Earlier OpenAI challenge report](challenge-results-openai.md)
 
 ## Grades
 
