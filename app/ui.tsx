@@ -15,7 +15,8 @@ export const amount = (n: any) =>
   n == null
     ? "—"
     : new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n);
-export const rupees = (n: any) => (n == null ? "—" : "₹" + amount(n));
+export const rupees = (n: any) =>
+  n == null ? "—" : Number(n) < 0 ? "−₹" + amount(-n) : "₹" + amount(n);
 export const percent = (n: any) =>
   n == null ? "—" : (n * 100).toFixed(1).replace(/\.0$/, "") + "%";
 export const day = (s: string) =>

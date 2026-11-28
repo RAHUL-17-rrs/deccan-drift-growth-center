@@ -166,10 +166,25 @@ test("OpenAI task drafts resolve a first-name owner, campaign name and 'by Frida
   assert.equal(reply.draft.owner, "Arjun Verma");
   assert.equal(reply.draft.campaign_id, "C03");
   assert.equal(reply.draft.deadline, friday());
-  assert.deepEqual(reply.draft.proposed, { status: "paused" });
+  // "Cut" without an amount attaches no automatic campaign change; only pause or stop does.
+  assert.equal(reply.draft.proposed, null);
   assert.equal(reply.scope.as_of, ctx.d);
   const tool = requests[0].tools.find(x => x.name === "draft_task");
   assert.ok(tool.parameters.properties.owner.enum.includes("Arjun Verma"));
+});
+
+test("Task drafts attach a budget change for a cut with an amount and a status change only for pause", async t => {
+  mockOpenAI(t, [
+    [call("draft_task", { title: "Cut Creator Partners spend by ₹10,000", owner: "Nisha Rao", campaign: "C03" })],
+    [message("[Data] Review the task draft. [E1]")],
+    [call("draft_task", { title: "Pause Creator Partners", owner: "Nisha Rao", campaign: "C03" })],
+    [message("[Data] Review the task draft. [E1]")],
+  ]);
+  // The seeded allocation splits ₹3,00,000 by 2025 net spend: ₹59,000 / ₹2,74,000 → ₹64,500.
+  const cut = await ask("Please draft a task for Nisha to cut Creator Partners spend by ₹10,000.");
+  assert.deepEqual(cut.draft.proposed, { budget: 54500 });
+  const pause = await ask("Please draft a task for Nisha to pause Creator Partners.");
+  assert.deepEqual(pause.draft.proposed, { status: "paused" });
 });
 
 test("An unknown owner returns the valid owners to the model, and a failed request explains why", async t => {
@@ -206,7 +221,9 @@ test("Direct measures keep their denominators and campaign filters in OpenAI mod
     ["Calculate 12.5 percent of INR 48,000", /6,000/],
     ["What's 15% of 2,74,000?", /41,100/],
     ["What was our sponsorship income?", /receipts are absent/],
-    ["How many people will come in 2027?", /\[Assumption \/ estimate\].*2027 committed plan/],
+    ["How many people will come in 2027?", /\[Assumption \/ estimate\].*Deccan Drift 2027 plan.*not a forecast[\s\S]*Holdback[^\n]*: 5%[\s\S]*Sponsor gate[^\n]*: ₹175\b/],
+    ["Spend as of 11 Apr vs final, why different?", /₹2,76,500 on 11 Apr 2025[\s\S]*₹2,74,000 on 20 Apr 2025[\s\S]*Creator Partners −₹2,000 on 16 Apr 2025[\s\S]*Student Referrals −₹500 on 18 Apr 2025[\s\S]*entirely these credits/],
+    ["Why did Paid Social's cost per attendee change?", /Paid Social cost per attendee: ₹273\.53 on 13 Apr 2025 → ₹273\.53 on 20 Apr 2025/],
     ["How's Arjun doing?", /Arjun Verma[^\n]*₹200[^\n]*₹1,07,000[^\n]*535/],
   ]) {
     const reply = await ask(question);

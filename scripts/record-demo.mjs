@@ -61,7 +61,7 @@ export async function recordDemo(browser,url){
   };
   await ask('Which campaigns are underperforming and why?');
   await ask('What should we do?');
-  await ask('Create a task for Arjun to cut Creator Partners spend by Friday');
+  await ask('Create a task for Nisha to pause Creator Partners by Friday');
   await page.getByRole('button',{name:'Confirm',exact:true}).click();await page.getByText('Saved to task manager').waitFor();await pause(1100);
   await page.getByRole('button',{name:'Close',exact:true}).click();
   await page.locator('nav').getByRole('button',{name:'Task manager'}).click();

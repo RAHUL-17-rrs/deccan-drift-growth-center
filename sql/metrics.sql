@@ -3,8 +3,14 @@ create table campaign_settings (
  budget numeric check(budget>=0), plan_cpr numeric check(plan_cpr>0),
  expected_showup numeric check(expected_showup between 0 and 1)
 );
-insert into campaign_settings(campaign_id,expected_showup)
- select campaign_id,b.showup from clean_campaigns c left join benchmarks b on b.name=c.campaign_name;
+-- Allocations start as a split of the latest approved budget in proportion to 2025 net spend (editable).
+insert into campaign_settings(campaign_id,expected_showup,budget)
+ select c.campaign_id,b.showup,round(coalesce(s.spend,0)*t.budget/nullif(t.total,0)/500)*500
+ from clean_campaigns c left join benchmarks b on b.name=c.campaign_name
+ left join (select campaign_id,sum(marketing_spend_inr) spend from clean_marketing group by 1) s using(campaign_id)
+ cross join (select (select marketing_budget_inr from raw_targets order by effective_at desc limit 1) budget,(select sum(marketing_spend_inr) from clean_marketing) total) t;
+update campaign_settings set budget=budget+((select marketing_budget_inr from raw_targets order by effective_at desc limit 1)-(select sum(budget) from campaign_settings))
+ where campaign_id=(select campaign_id from campaign_settings order by budget desc,campaign_id limit 1);
 create table settings(id int primary key default 1 check(id=1), scale numeric default .8, stop numeric default 1.5,
  k numeric default .35, paid_k numeric default .2, walkins int default 125,
  check(scale>0 and stop>scale and k between 0 and 1 and paid_k between 0 and 1 and walkins>=0));

@@ -132,7 +132,7 @@ export function Overview({ db, go }: { db: Data; go: (p: string) => void }) {
             </div>
           </div>
           <p className="ringNote">
-            {pc(k.attendee_attainment)} of {n(k.attendee_goal)} visitor goal
+            {pc(k.attendee_attainment)} of {n(k.attendee_goal)} attendee goal
           </p>
           <button className="statLink" onClick={() => go("Funnel")}>
             View attendance funnel <ChevronRight size={15} />
@@ -279,7 +279,8 @@ export function Overview({ db, go }: { db: Data; go: (p: string) => void }) {
           <small>vs {n(dr.previous_regs)} prior week</small>
         </div>
         <div>
-          <strong>{rs(net(weeks))}</strong> net spend{" "}
+          <strong>{rs(net(weeks))}</strong>{" "}
+          {net(weeks) < 0 ? "net spend (credits)" : "net spend"}{" "}
           <small>vs {rs(net(previous))} prior week</small>
         </div>
         <button className="textBtn" onClick={() => go("Campaigns")}>
@@ -319,7 +320,7 @@ export function Overview({ db, go }: { db: Data; go: (p: string) => void }) {
                     ? "No active goal"
                     : n(Math.abs(atGoal)) +
                       (atGoal <= 0 ? " below" : " above") +
-                      " visitor goal",
+                      " attendee goal",
               ],
             ].map(([l, v, help]) => (
               <div key={l}>

@@ -152,9 +152,9 @@ export function Campaigns({
             ["Attendees", (r) => n(r.attendees)],
             ["Show-up", (r) => pc(r.showup)],
             ["₹ / reg", (r) => rs(r.cpr)],
-            ["₹ / visitor", (r) => rs(r.cpa)],
+            ["₹ / attendee", (r) => rs(r.cpa)],
             ["Spend share", (r) => pc(r.spend_share)],
-            ["Visitor share", (r) => pc(r.attendee_share)],
+            ["Attendee share", (r) => pc(r.attendee_share)],
             ["Session → reg", (r) => pc(r.conversion)],
             [
               "Weekly regs",
@@ -337,7 +337,7 @@ export function Budget({ db, scope }: { db: Data; scope: Row }) {
       </Panel>
       <Panel
         title="Campaign budgets"
-        sub="Campaign allocations are editable in the manager."
+        sub="Allocations start as a split of the approved budget in proportion to each campaign's 2025 net spend. Edit them in the task manager's campaign directory."
       >
         <Table
           rows={channels}
@@ -346,7 +346,22 @@ export function Budget({ db, scope }: { db: Data; scope: Row }) {
             ["Status", (r) => <Badge value={r.operating_status} />],
             ["Allocated", (r) => rs(r.budget)],
             ["Net spend", (r) => rs(r.spend)],
-            ["Plan cost / reg", (r) => rs(r.plan_cpr)],
+            [
+              "Plan cost / reg",
+              (r) => (
+                <span
+                  className="hint"
+                  title={
+                    db.managed?.find((x: Row) => x.campaign_id === r.cid)?.plan_cpr == null
+                      ? "Default: approved budget ÷ registration goal for the target version in effect. The same value applies to every campaign until one is set in the manager."
+                      : "Campaign-specific plan set in the manager."
+                  }
+                >
+                  {rs(r.plan_cpr)}
+                  {db.managed?.find((x: Row) => x.campaign_id === r.cid)?.plan_cpr == null ? " (default)" : ""}
+                </span>
+              ),
+            ],
           ]}
         />
       </Panel>

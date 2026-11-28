@@ -112,28 +112,31 @@ try {
         .answer,
   );
   const task =
-    "Create a task for Arjun to cut Creator Partners spend by Friday";
+    "Create a task for Arjun to cut Creator Partners spend by 20% by Friday";
   await check(
     task,
-    "Preview only · C03 · Arjun Verma · resolved Friday",
+    "Preview only · C03 · Arjun Verma · resolved Friday · proposed allocation ₹51,600",
     async () => {
       draft = await ask(task);
       assert.equal(draft.draft.owner, "Arjun Verma");
       assert.equal(draft.draft.campaign_id, "C03");
       assert.equal(draft.draft.deadline, friday());
+      // A cut attaches a budget change (20% of the ₹64,500 seeded allocation), never a pause.
+      assert.deepEqual(draft.draft.proposed, { budget: 51600 });
       assert.equal(await sql("select count(*) from tasks"), "0");
       return (
         draft.draft.title +
         " · " +
         draft.draft.campaign_id +
         " · " +
-        draft.draft.deadline
+        draft.draft.deadline +
+        " · allocation ₹" + draft.draft.proposed.budget.toLocaleString("en-IN")
       );
     },
   );
   await check(
     "Confirm twice and complete the proposed change",
-    "One AI task, open count 1; completion applies paused status",
+    "One AI task, open count 1; completion applies the ₹51,600 allocation",
     async () => {
       const params = {
         conversation: draft.conversation,
@@ -171,11 +174,11 @@ try {
       );
       assert.equal(
         await sql(
-          "select status from campaign_settings where campaign_id='C03'",
+          "select status||' '||budget from campaign_settings where campaign_id='C03'",
         ),
-        "paused",
+        "active 51600",
       );
-      return "One linked AI task, one open action, completion applied paused status";
+      return "One linked AI task, one open action, completion set the allocation to ₹51,600 and left the campaign active";
     },
   );
   for (const q of [
@@ -186,7 +189,7 @@ try {
     await check(
       q,
       "Explains missing field or uncertain forecast",
-      async () => (await match(q, [/can.t answer/i])).answer,
+      async () => (await match(q, [/can.t answer|not a forecast/i])).answer,
     );
   for (const [q, expected, rx] of [
     [

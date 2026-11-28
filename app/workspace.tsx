@@ -226,7 +226,7 @@ export default function Workspace() {
               <div className="titleRow">
                 <h1>{headings[page]}</h1>
                 <span className="edition">
-                  {page === "Plan" ? "Deccan Drift 2027" : "CampusFest 2025"}
+                  {page === "Plan" ? "Deccan Drift 2027 plan" : "Historical data: CampusFest 2025"}
                 </span>
               </div>
               <p>{desc[page]}</p>

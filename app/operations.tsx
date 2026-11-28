@@ -25,6 +25,7 @@ import {
   day,
   csvDownload,
 } from "./ui";
+import { formatGateValue, gateTrigger, gateUnit } from "../lib/plan-gates.mjs";
 type DialogSpec = {
   title: string;
   data: Row;
@@ -582,8 +583,18 @@ export function Operations({
                 ["Gate", (r) => r.name],
                 ["Timing", (r) => r.timing],
                 ["Rule", (r) => <span className="long">{r.rule}</span>],
-                ["Value", (r) => r.value],
-                ["Multiplier", (r) => r.multiplier],
+                [
+                  "Threshold",
+                  (r) => formatGateValue(r.value, gateUnit(r.name, r.rule)),
+                ],
+                [
+                  "Trigger point",
+                  (r) => (
+                    <span title="Threshold × the gate's multiplier (stored in the workbook). Edit both in the gate form.">
+                      {gateTrigger(r) || "At the threshold"}
+                    </span>
+                  ),
+                ],
                 [
                   "Edit",
                   (r) =>
@@ -633,9 +644,13 @@ export function Operations({
                 [
                   "Plan ₹ / reg",
                   (r) =>
-                    r.plan_cpr == null
-                      ? "Active target baseline"
-                      : rs(r.plan_cpr),
+                    r.plan_cpr == null ? (
+                      <span title="Default for every campaign: approved budget ÷ registration goal of the target version in effect. Set a campaign-specific value to override it.">
+                        Default (budget ÷ goal)
+                      </span>
+                    ) : (
+                      rs(r.plan_cpr)
+                    ),
                 ],
                 ["Expected show-up", (r) => pc(r.expected_showup)],
               ]}

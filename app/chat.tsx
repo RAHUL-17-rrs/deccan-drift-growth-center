@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Sparkles, Send, Check, ChevronRight } from "lucide-react";
-import { Modal, Row, api, day, Field, owners } from "./ui";
+import { Modal, Row, api, day, Field, owners, rupees } from "./ui";
 export function Copilot({
   scope,
   user,
@@ -203,7 +203,12 @@ export function Copilot({
                         </small>
                         {draft.proposed && (
                           <p>
-                            On completion · {JSON.stringify(draft.proposed)}
+                            On completion ·{" "}
+                            {draft.proposed.status
+                              ? "set campaign to " + draft.proposed.status
+                              : draft.proposed.budget != null
+                                ? "set allocation to " + rupees(draft.proposed.budget)
+                                : JSON.stringify(draft.proposed)}
                           </p>
                         )}
                       </>

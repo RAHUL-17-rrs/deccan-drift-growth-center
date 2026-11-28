@@ -70,6 +70,17 @@ function copyToInserts(script) {
   );
 }
 
+// The hosted demo starts with a few illustrative tasks so the task manager is not empty.
+// Local and test databases start with an empty board, which the evaluation fixtures rely on.
+const sampleTasks = () =>
+  process.env.GROWTH_SAMPLE_TASKS === "1" ||
+  (process.env.VERCEL && process.env.GROWTH_SAMPLE_TASKS !== "0");
+const sampleTaskSql =
+  "insert into tasks(title,description,owner,deadline,status,priority,campaign_id,created_by,actor,source) values " +
+  "('Send reminder sequence to confirmed Creator Partners registrants','Sample task: Creator Partners show-up was 50%. Test a two-step reminder before the next event.','Nisha Rao',current_date+7,'todo','high','C03','user','Pranit','sample')," +
+  "('Test a ₹99 refundable deposit on Paid Social sign-ups','Sample task: Paid Social had the most registrations but a 50% show-up rate.','Arjun Verma',current_date+14,'doing','normal','C02','user','Pranit','sample')," +
+  "('Share College Partnerships playbook with Campus Ambassadors','Sample task: College Partnerships had the best show-up (85.6%).','Meera Iyer',current_date-3,'done','low','C04','user','Pranit','sample');";
+
 export async function seed(user = "Local operator") {
   await ensureDatabase();
   let data = extract();
@@ -82,6 +93,7 @@ export async function seed(user = "Local operator") {
       fs.readFileSync("sql/metrics.sql", "utf8") +
       "\n" +
       fs.readFileSync("sql/operations.sql", "utf8") +
+      (sampleTasks() ? "\n" + sampleTaskSql : "") +
       "\ninsert into growth_audit.log(actor,entity,key) values (" +
       literal(user) +
       ", 'reset','original workbooks'); commit;",
