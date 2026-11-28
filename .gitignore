@@ -11,3 +11,6 @@ __pycache__/
 
 .vercel
 .env*
+
+# Company brief and handoff pack: keep local, never publish
+*.pdf
